@@ -13,6 +13,7 @@ port = 9001
 server_address = "ws://127.0.0.1:9999/"
 message_queue = queue.Queue()
 
+# 初始化全局变量
 connectionId = ""
 targetId = ""
 
@@ -22,10 +23,11 @@ def print_handler(address, *args):
     print(f"来自OSC{address}: {args}")
     if args[0] < 0.01:
         clear_dglab_ws()
-        message_queue = queue.Queue()
+        message_queue = queue.Queue() # 清空消息队列
     else:
-        message_queue.put((address, args))
+        message_queue.put((address, args)) # 将消息放入队列
 
+# 默认OSC处理函数
 def default_handler(address, *args):
     print(f"DEFAULT {address}: {args}")
 
@@ -36,24 +38,24 @@ def process_messages():
             address, args = message_queue.get()
             print("dglabA")
             print(f"{address}: {args}")
-            dglab_ws()
-            time.sleep(0.1)
+            dglab_ws() # 处理消息
+            time.sleep(0.1) # 控制处理速度
 
+# 启动消息处理线程
 message_processor_thread = threading.Thread(target=process_messages)
 message_processor_thread.start()
 
 def dglab_up():
     data_to_send = {
         "type": 2,
-        "strength": 1,
-        "message": "set channel",
-        "channel": 1,
-        "clientId": connectionId,
+        "strength": 1, # 设置强度为1
+        "message": "set channel", # 设置通道
+        "channel": 1, # 设置通道为1
         "targetId": targetId
     }
     json_data = json.dumps(data_to_send)
     ws.send(json_data)
-    dglab_to_zero()
+    dglab_to_zero() # 将强度设置为0
 def dglab_to_zero():
     data_to_send = {
         "type": 3,
@@ -66,6 +68,7 @@ def dglab_to_zero():
     json_data = json.dumps(data_to_send)
     ws.send(json_data)
 
+# 清除WebSocket消息
 def clear_dglab_ws():
     data_to_clear = {
         "type": 4,
@@ -86,7 +89,7 @@ def dglab_ws():
         "targetId": targetId
     }
     json_data_wave = json.dumps(data_to_send_wave)
-    ws.send(json_data_wave)
+    ws.send(json_data_wave) # 通过WebSocket发送数据
     
 # WebSocket回调函数
 def on_message(ws, message):
@@ -100,7 +103,7 @@ def on_message(ws, message):
     if msg_json["type"] == "bind":
         img = qrcode.make('https://www.dungeon-lab.com/app-download.php#DGLAB-SOCKET#ws://10.50.147.215:9999/' + connectionId)
         type(img)  # qrcode.image.pil.PilImage
-        img.save("some_file.png")
+        img.save("some_file.png") # 保存二维码
         data_to_send = {
             "type": 4,
             "message":"strength-1+2+35",
@@ -108,15 +111,15 @@ def on_message(ws, message):
             "targetId": targetId
         }
         json_data = json.dumps(data_to_send)
-        ws.send(json_data)
+        ws.send(json_data) # 通过WebSocket发送数据
 
-def on_error(ws, error):
+def on_error(ws, error): #错误
     print("Error:", error)
 
-def on_close(ws):
+def on_close(ws): #关闭
     print("Connection closed")
 
-def on_open(ws):
+def on_open(ws): #打开
     print("Connection opened")
 
 
@@ -134,8 +137,9 @@ dispatcher.map("/avatar/parameters/dglabA", print_handler)
 
 server = BlockingOSCUDPServer((ip, port), dispatcher)
 
+# 启动WebSocket线程
 t1 = threading.Thread(target=ws.run_forever)
 t1.start()
 
 print("OSC 服务器开始监听...")
-server.serve_forever()
+server.serve_forever() # 启动OSC服务器
