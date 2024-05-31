@@ -7,6 +7,7 @@ import threading
 import time
 import queue
 
+# 设置IP和端口
 ip = "127.0.0.1"
 port = 9001
 server_address = "ws://127.0.0.1:9999/"
@@ -14,6 +15,8 @@ message_queue = queue.Queue()
 
 connectionId = ""
 targetId = ""
+
+# OSC处理函数
 def print_handler(address, *args):
     global message_queue
     print(f"来自OSC{address}: {args}")
@@ -26,6 +29,7 @@ def print_handler(address, *args):
 def default_handler(address, *args):
     print(f"DEFAULT {address}: {args}")
 
+# 处理消息的线程函数
 def process_messages():
     while True:
         if not message_queue.empty():
@@ -83,7 +87,8 @@ def dglab_ws():
     }
     json_data_wave = json.dumps(data_to_send_wave)
     ws.send(json_data_wave)
-
+    
+# WebSocket回调函数
 def on_message(ws, message):
     print("Received:", message)
     msg_json = json.loads(message)
